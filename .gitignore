@@ -1,0 +1,5 @@
+.vscode
+imrsim.code-workspace
+src_pth/test.png
+src_pth/__pycache__
+src_pth/sandbox.py
