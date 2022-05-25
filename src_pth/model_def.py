@@ -32,8 +32,8 @@ import torchvision as thv
 class RImNN(th.nn.Module):
   def __init__(self, width, height, channel_num):
     super(RImNN, self).__init__()
-    sobel_x = th.Tensor([[[1., 2., 1.],[0., 0., 0.],[-1.,-2.,-1.]]])
-    sobel_y = th.Tensor([[[1., 0.,-1.],[2., 0.,-2.],[ 1., 0.,-1.]]]) 
+    sobel_x = th.Tensor([[[1., 2., 1.],[0., 0., 0.],[-1.,-2.,-1.]]]) / 8.
+    sobel_y = th.Tensor([[[1., 0.,-1.],[2., 0.,-2.],[ 1., 0.,-1.]]]) / 8. 
     identt  = th.Tensor([[[0., 0., 0.],[0., 1., 0.],[ 0., 0., 0.]]]) 
     self.kernels = th.stack([identt, sobel_x, sobel_y], 0)
 
@@ -41,10 +41,10 @@ class RImNN(th.nn.Module):
     self.h = height
     self.chn = channel_num
 
-    last_conv = th.nn.Conv2d(128, channel_num, 1)
+    last_conv = th.nn.Conv2d(64, channel_num, 1)
     last_conv.weight.data.fill_(0.0)
     self.core = th.nn.Sequential(
-      th.nn.Conv2d(48, 128, 1),
+      th.nn.Conv2d(3*channel_num, 64, 1),
       th.nn.ReLU(),
       last_conv
     )
@@ -64,7 +64,7 @@ class RImNN(th.nn.Module):
 
   def forward(self, X):
     # *4. 
-    pre_lm = self.get_life_mask(X)
+    #pre_lm = self.get_life_mask(X)
 
     # 1. 
     Y = self.fixed_convolve(X)
@@ -73,15 +73,11 @@ class RImNN(th.nn.Module):
     dx = self.core(Y) # can be parametrized with step size
 
     # 3.
-    with th.no_grad():
-      dx_mask = th.rand_like(dx) < 0.5
-      dx *= dx_mask.float()
+    X = X + dx * (th.rand_like(dx) < 0.5).float()
 
-    X = X + dx
-
-    ## 4. 
+    # 4. 
     post_lm = self.get_life_mask(X)
-    X = X * (pre_lm & post_lm).float()
-    #X = X * (post_lm).float()
+    #X = X * (pre_lm & post_lm).float()
+    X = X * (post_lm).float()
 
     return X 

@@ -14,11 +14,11 @@ from model_def import RImNN
 # update rule
 
 def run():
-  width  = 32
-  height = 32
-  channel_count = 16 # RGB, A - indicate if cell alive, .. 12 <= space for nn information
+  width  = 8
+  height = 8
+  channel_count = 8 # RGB, A - indicate if cell alive, .. 12 <= space for nn information
 
-  img = np.array(Image.open("../Images/devil1_1.png"))
+  img = np.array(Image.open("../Images/place_1.png"))
   assert(tuple(img.shape) == (width, height, 4))
 
   img = np.moveaxis(img, 2, 0)
@@ -36,16 +36,16 @@ def run():
     optimizer.zero_grad()
     for _ in range(num):
       X = model(X)
-      loss = loss_fn(X[:, 0:4, ...], img)
-      loss.backward(retain_graph=True)
+    
+    loss = loss_fn(X[:, 0:4, ...], img)
+    loss.backward()#retain_graph=True)
     optimizer.step() 
     return X, loss
    
   BATCH_SIZE = 1
 
   # LOOP 
-  #model.train()
-  for _ in range(32):
+  for _ in range(1000):
     seed = th.zeros(BATCH_SIZE, channel_count, width, height)
     seed[:, 3:, width//2, height//2] = 1.0
 
@@ -62,6 +62,5 @@ def run():
     seed = seed.astype(np.uint8)
     Image.fromarray(seed).save("test.png")
   
-#th.autograd.set_detect_anomaly(True)
 run()
 
