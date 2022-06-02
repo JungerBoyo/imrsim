@@ -13,10 +13,10 @@ from model_def import RImNN
 # NOTE as in RNNs differentiably optimize parameters of 
 # update rule
 
-def run():
+if __name__=="__main__":
   width  = 8
   height = 8
-  channel_count = 8 # RGB, A - indicate if cell alive, .. 12 <= space for nn information
+  channel_count = 16 # RGB, A - indicate if cell alive, .. 4 <= space for nn information
 
   img = np.array(Image.open("../Images/place_1.png"))
   assert(tuple(img.shape) == (width, height, 4))
@@ -36,9 +36,9 @@ def run():
     optimizer.zero_grad()
     for _ in range(num):
       X = model(X)
-    
-    loss = loss_fn(X[:, 0:4, ...], img)
-    loss.backward()#retain_graph=True)
+      loss = loss_fn(X[:, 0:4, ...], img)
+      loss.backward(retain_graph=True)
+
     optimizer.step() 
     return X, loss
    
@@ -53,14 +53,4 @@ def run():
 
     print(f"{loss.item()}")
 
-  with th.no_grad():
-    seed = seed[:, 0:4, ...]
-    seed = th.squeeze(seed)
-    seed = th.moveaxis(seed, 0, 2)
-    seed = seed.numpy()
-    seed *= 255.
-    seed = seed.astype(np.uint8)
-    Image.fromarray(seed).save("test.png")
-  
-run()
-
+  th.save(model.state_dict(), "../Models/ex0Model.pth")
